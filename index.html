@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔐 Escape Total — Constructor de Escape Rooms</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600;700&display=swap');
+  :root{
+    --cyan:#00f0ff; --cyan-dim:#007a82;
+    --purple:#c840ff; --purple-dim:#6020a0;
+    --green:#39ff14; --amber:#ffb800; --red:#ff3860;
+    --bg0:#05080f; --bg1:#0a0e1a; --bg2:#0f1425; --bg3:#141c35; --bg4:#1a2340;
+    --text-muted:#7a88b0;
+    --font-title:'Orbitron','Segoe UI',monospace;
+    --font-body:'Rajdhani','Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(circle at 50% 0%, var(--bg2), var(--bg0) 70%);
+    color:#fff;font-family:var(--font-body);min-height:100vh;
+  }
+  header{
+    padding:18px 22px;border-bottom:2px solid var(--bg4);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+  }
+  header h1{
+    font-family:var(--font-title);font-size:clamp(18px,3vw,26px);margin:0;
+    color:var(--cyan);letter-spacing:2px;
+    text-shadow:0 0 14px var(--cyan-dim);
+  }
+  header .sub{color:var(--text-muted);font-size:13px;letter-spacing:1px;margin-top:2px;}
+  main{max-width:820px;margin:0 auto;padding:22px;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+  .card{
+    background:var(--bg2);border:1px solid var(--bg4);border-radius:16px;
+    padding:22px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .card h2{
+    font-family:var(--font-title);font-size:16px;letter-spacing:1px;color:var(--purple);
+    margin-top:0;
+  }
+  label{display:block;font-size:14px;color:var(--text-muted);margin-bottom:6px;letter-spacing:.5px;}
+  .neon-input, textarea.neon-input{
+    width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--bg4);
+    background:var(--bg1);color:#fff;font-family:var(--font-body);font-size:15px;
+    font-weight:600;letter-spacing:.5px;
+  }
+  textarea.neon-input{min-height:60px;resize:vertical;}
+  .neon-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,240,255,.15);}
+  .field{margin-bottom:14px;}
+  .lockcard{
+    background:var(--bg3);border:1px solid var(--bg4);border-radius:12px;padding:16px;margin-bottom:14px;
+    position:relative;
+  }
+  .lockcard .locknum{
+    font-family:var(--font-title);color:var(--amber);font-size:13px;letter-spacing:1px;margin-bottom:10px;
+  }
+  .removelock{
+    position:absolute;top:12px;right:12px;background:none;border:none;color:var(--red);
+    font-size:18px;cursor:pointer;font-weight:700;
+  }
+  .btn{
+    font-family:var(--font-title);font-size:13px;letter-spacing:1px;border:none;border-radius:10px;
+    padding:13px 22px;cursor:pointer;font-weight:700;color:#0a0e1a;
+  }
+  .btn-cyan{background:linear-gradient(135deg,var(--cyan-dim),var(--cyan));color:#04222a;}
+  .btn-purple{background:linear-gradient(135deg,var(--purple-dim),var(--purple));color:#fff;}
+  .btn-green{background:linear-gradient(135deg,#1a6b0c,var(--green));color:#06210a;}
+  .btn-ghost{background:var(--bg3);color:var(--text-muted);border:1px solid var(--bg4);}
+  .btn:hover{filter:brightness(1.15);transform:translateY(-1px);}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .notice{
+    font-size:13px;color:var(--text-muted);background:var(--bg1);border:1px dashed var(--bg4);
+    border-radius:10px;padding:10px 14px;margin-bottom:16px;
+  }
+  /* ---- juego ---- */
+  .hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+  .hud .step{font-family:var(--font-title);color:var(--cyan);font-size:14px;letter-spacing:1px;}
+  .hud .timer{font-family:var(--font-title);color:var(--amber);font-size:16px;letter-spacing:1px;}
+  .intro{color:var(--purple);font-style:italic;display:block;margin-bottom:16px;font-size:15px;line-height:1.5;}
+  .clue{background:var(--bg1);border-left:4px solid var(--purple);padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:15px;}
+  .clue b{color:var(--purple);}
+  .question{font-size:22px;font-weight:700;margin-bottom:20px;line-height:1.4;}
+  .inputrow{display:flex;gap:10px;margin-bottom:14px;}
+  .inputrow input{flex:1;font-family:var(--font-title);font-size:20px;letter-spacing:4px;text-align:center;}
+  .feedback{min-height:30px;font-weight:700;font-size:16px;margin-top:6px;}
+  .feedback.ok{color:var(--green);}
+  .feedback.bad{color:var(--red);}
+  .complete{text-align:center;padding:30px 10px;}
+  .complete .icon{font-size:60px;margin-bottom:10px;}
+  .complete .title{font-family:var(--font-title);font-size:24px;color:var(--green);letter-spacing:2px;margin-bottom:10px;}
+  .complete .stats{color:var(--text-muted);font-size:15px;line-height:1.6;margin-bottom:20px;}
+  .complete .stats b{color:#fff;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🔐 ESCAPE TOTAL</h1>
+    <div class="sub">Constructor de escape rooms · cualquier materia · cualquier nivel</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===== EDITOR ===== -->
+  <section id="editor" class="screen active">
+    <div class="notice">⚠️ Este contenido vive solo en esta pestaña — no se guarda al cerrarla. Si quieres reusarlo, deja la pestaña abierta o vuelve a escribirlo.</div>
+
+    <div class="card">
+      <h2>Misión</h2>
+      <div class="field">
+        <label>Título de la misión</label>
+        <input class="neon-input" id="missionTitle" type="text" placeholder="Ej. Escape del Laboratorio Perdido">
+      </div>
+      <div class="field">
+        <label>Historia / introducción (opcional — aparece antes de la primera cerradura)</label>
+        <textarea class="neon-input" id="missionIntro" placeholder="Ej. Un extraño apagón bloqueó el laboratorio. Deben resolver 3 cerraduras para escapar antes de que se acabe el tiempo..."></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cerraduras (retos en orden)</h2>
+      <div id="locksContainer"></div>
+      <div class="row">
+        <button class="btn btn-ghost" onclick="addLock()">+ Agregar cerradura</button>
+        <button class="btn btn-ghost" onclick="loadExample()">🎲 Cargar ejemplo</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn btn-green" style="font-size:15px;padding:15px 28px;" onclick="startMission()">🔓 Iniciar misión</button>
+      <span id="editorError" style="color:var(--red);margin-left:14px;font-size:14px;"></span>
+    </div>
+  </section>
+
+  <!-- ===== JUEGO ===== -->
+  <section id="game" class="screen">
+    <div class="card">
+      <div class="hud">
+        <span class="step" id="hudStep">CERRADURA 1 DE 1</span>
+        <span class="timer" id="hudTimer">⏱ 00:00</span>
+      </div>
+      <div id="gameBody"></div>
+    </div>
+  </section>
+
+  <!-- ===== CIERRE ===== -->
+  <section id="finish" class="screen">
+    <div class="card">
+      <div class="complete" id="finishBody"></div>
+      <div class="row" style="justify-content:center;">
+        <button class="btn btn-cyan" onclick="backToEditor()">↺ Nueva misión</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ============ ESTADO ============ */
+let locks = [];
+let mission = {title:'', intro:''};
+let game = {current:0, errors:0, startTime:0, timerInt:null};
+
+/* ============ EDITOR: CERRADURAS ============ */
+function addLock(data){
+  const id = 'lk' + Math.random().toString(36).slice(2,9);
+  locks.push({id, pista: data?data.pista:'', pregunta: data?data.pregunta:'', codigo: data?data.codigo:'', ayuda: data?data.ayuda:''});
+  renderLocks();
+}
+function removeLock(id){
+  locks = locks.filter(l=>l.id!==id);
+  if(locks.length===0) addLock();
+  else renderLocks();
+}
+function updateLock(id, field, value){
+  const l = locks.find(l=>l.id===id);
+  if(l) l[field] = value;
+}
+function renderLocks(){
+  const box = document.getElementById('locksContainer');
+  box.innerHTML = locks.map((l,i)=>`
+    <div class="lockcard">
+      ${locks.length>1 ? `<button class="removelock" onclick="removeLock('${l.id}')" title="Quitar">✕</button>` : ''}
+      <div class="locknum">🔒 CERRADURA ${i+1}</div>
+      <div class="field">
+        <label>Pista (el contexto que ven antes de la pregunta)</label>
+        <input class="neon-input" value="${esc(l.pista)}" oninput="updateLock('${l.id}','pista',this.value)" placeholder="Ej. La primera cerradura esconde un número que se repite en la naturaleza.">
+      </div>
+      <div class="field">
+        <label>Pregunta / reto</label>
+        <textarea class="neon-input" oninput="updateLock('${l.id}','pregunta',this.value)" placeholder="Ej. ¿Cuántos lados tiene un hexágono?">${esc(l.pregunta)}</textarea>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:1;min-width:160px;">
+          <label>Código correcto (solo números)</label>
+          <input class="neon-input" inputmode="numeric" value="${esc(l.codigo)}" oninput="updateLock('${l.id}','codigo',this.value.replace(/[^0-9]/g,''))" placeholder="Ej. 6">
+        </div>
+        <div class="field" style="flex:2;min-width:220px;">
+          <label>Pista de ayuda (aparece si fallan)</label>
+          <input class="neon-input" value="${esc(l.ayuda)}" oninput="updateLock('${l.id}','ayuda',this.value)" placeholder="Ej. Hexa significa seis en griego.">
+        </div>
+      </div>
+    </div>`).join('');
+}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function loadExample(){
+  locks = [];
+  document.getElementById('missionTitle').value = 'El Código Perdido de la Biblioteca';
+  document.getElementById('missionIntro').value = 'La bibliotecaria desapareció y dejó 3 cerraduras antes del estante secreto. Resuelvan las tres para encontrar el libro perdido.';
+  addLock({pista:'La primera cerradura esconde un número que se repite en la naturaleza.', pregunta:'¿Cuántos lados tiene un hexágono?', codigo:'6', ayuda:'Hexa significa seis en griego.'});
+  addLock({pista:'La segunda cerradura guarda una palabra de nuestra lengua.', pregunta:'¿Cuántas sílabas tiene la palabra "murciélago"?', codigo:'4', ayuda:'Sepáral así: mur-cié-la-go.'});
+  addLock({pista:'La última cerradura es matemática.', pregunta:'¿Cuánto es la mitad de 48?', codigo:'24', ayuda:'Divide 48 entre 2.'});
+}
+
+/* ============ EMPEZAR MISIÓN ============ */
+function startMission(){
+  const title = document.getElementById('missionTitle').value.trim();
+  const intro = document.getElementById('missionIntro').value.trim();
+  const err = document.getElementById('editorError');
+  if(!title){ err.textContent = 'Escribe un título para la misión.'; return; }
+  const incomplete = locks.some(l=>!l.pista.trim() || !l.pregunta.trim() || !l.codigo.trim());
+  if(incomplete){ err.textContent = 'Cada cerradura necesita pista, pregunta y código.'; return; }
+  err.textContent = '';
+  mission = {title, intro};
+  game = {current:0, errors:0, startTime:Date.now(), timerInt:null};
+  showScreen('game');
+  startTimer();
+  showLock(0);
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function backToEditor(){
+  clearInterval(game.timerInt);
+  showScreen('editor');
+}
+
+/* ============ TEMPORIZADOR (cuenta hacia arriba) ============ */
+function startTimer(){
+  clearInterval(game.timerInt);
+  game.timerInt = setInterval(()=>{
+    const secs = Math.floor((Date.now()-game.startTime)/1000);
+    const m = String(Math.floor(secs/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    document.getElementById('hudTimer').textContent = '⏱ ' + m + ':' + s;
+  }, 1000);
+}
+function elapsedLabel(){
+  const secs = Math.floor((Date.now()-game.startTime)/1000);
+  const m = String(Math.floor(secs/60)).padStart(2,'0');
+  const s = String(secs%60).padStart(2,'0');
+  return m + ':' + s;
+}
+
+/* ============ SONIDO ============ */
+let audioCtx;
+function beep(freq, dur){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = freq||880; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    o.start(); o.stop(audioCtx.currentTime + (dur||0.15));
+  }catch(e){}
+}
+
+/* ============ JUEGO: MOSTRAR CERRADURA ============ */
+function showLock(idx){
+  const total = locks.length;
+  document.getElementById('hudStep').textContent = 'CERRADURA ' + (idx+1) + ' DE ' + total;
+  const l = locks[idx];
+  document.getElementById('gameBody').innerHTML = `
+    ${idx===0 && mission.intro ? `<em class="intro">${esc(mission.intro)}</em>` : ''}
+    <div class="clue"><b>PISTA:</b> ${esc(l.pista)}</div>
+    <div class="question">${esc(l.pregunta)}</div>
+    <div class="inputrow">
+      <input class="neon-input" id="codeInput" type="text" inputmode="numeric" placeholder="••••" autocomplete="off">
+      <button class="btn btn-purple" onclick="checkCode(${idx})">ABRIR 🔓</button>
+    </div>
+    <div class="feedback" id="feedback"></div>`;
+  const input = document.getElementById('codeInput');
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') checkCode(idx); });
+  setTimeout(()=>input.focus(), 60);
+}
+function checkCode(idx){
+  const l = locks[idx];
+  const val = document.getElementById('codeInput').value.trim();
+  const fb = document.getElementById('feedback');
+  if(!val) return;
+  if(val === l.codigo.trim()){
+    beep(880,0.18);
+    fb.className = 'feedback ok';
+    fb.textContent = '🔓 ¡CERRADURA ABIERTA!';
+    setTimeout(()=>{
+      if(idx+1 < locks.length) showLock(idx+1);
+      else finishMission();
+    }, 1000);
+  } else {
+    game.errors++;
+    beep(220,0.25);
+    fb.className = 'feedback bad';
+    fb.textContent = '💡 Pista: ' + l.ayuda;
+  }
+}
+function finishMission(){
+  clearInterval(game.timerInt);
+  const perfect = game.errors===0;
+  const time = elapsedLabel();
+  document.getElementById('finishBody').innerHTML = `
+    <div class="icon">${perfect ? '🌟' : '✅'}</div>
+    <div class="title">${perfect ? '¡ESCAPE PERFECTO!' : '¡MISIÓN CUMPLIDA!'}</div>
+    <div class="stats">
+      Abrieron las <b>${locks.length}</b> cerraduras de «${esc(mission.title)}»<br>
+      Tiempo: <b>${time}</b> · Errores: <b>${game.errors}</b>
+    </div>`;
+  showScreen('finish');
+}
+
+/* ============ INICIO ============ */
+addLock();
+</script>
+</body>
+</html>
